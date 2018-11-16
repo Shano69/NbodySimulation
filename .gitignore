@@ -1,0 +1,12 @@
+
+\.vs/
+
+NBodySimulation\.sln
+
+Debug/
+
+NBodySimulation/NBodySimulation\.vcxproj
+
+NBodySimulation/NBodySimulation\.vcxproj\.filters
+
+NBodySimulation/NBodySimulation\.vcxproj\.user
