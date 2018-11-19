@@ -27,7 +27,7 @@ static const char* vShader = "Shaders/physics.vert";
 static const char* fShader = "Shaders/physics.frag";
 
 
-constexpr int BODIES = 500;
+constexpr int BODIES = 400;
 
 std::vector<Body*> bodyList;
 std::vector<Shader*> shaderList;
