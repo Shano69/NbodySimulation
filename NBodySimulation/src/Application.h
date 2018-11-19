@@ -19,7 +19,7 @@
 class Application
 {
 public:
-	Application();
+	Application(const char *windowTitle);
 	~Application();
 
 	//data for creating window
@@ -41,7 +41,7 @@ public:
 
 	void swapBuffer() { glfwSwapBuffers(app_window); }
 
-
+	void showFPS();
 	//camera
 	static Camera camera;
 
@@ -57,10 +57,6 @@ public:
 		app_shader.UseShader();
 	}
 
-	//"PERSONAL NOTE" implementatation of the 
-	// App class abstraction from the Physics based animation ideas
-	// overlaps with existing code as a result initRender only calls the Window.Initialize
-
 	// call the window render 
 	int initRender();
 
@@ -71,7 +67,7 @@ public:
 	void terminate() { glfwTerminate(); };
 
 private:
-
+	const char *app_windowTitle;
 	// view and projection matrices
 	glm::mat4 app_view = glm::mat4(1.0f);
 	glm::mat4 app_projection = glm::mat4(1.0f);
@@ -83,6 +79,8 @@ private:
 	GLint bufferWidth, bufferHeight;
 
 public:
+
+
 	static bool keys[1024];
 
 	static GLfloat lastX;

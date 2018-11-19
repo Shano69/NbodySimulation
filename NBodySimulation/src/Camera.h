@@ -11,7 +11,13 @@ class Camera
 {
 public:
 	Camera();
-	Camera(glm::vec3 startPosition = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 startUp = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat startYaw = -90.0f, GLfloat startPitch = 0.0f, GLfloat startMoveSpeed = 6.0f, GLfloat StartTurnSpeed = 0.3f);
+	Camera(glm::vec3 startPosition = 
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3 startUp = glm::vec3(0.0f, 1.0f, 0.0f),
+		GLfloat startYaw = -90.0f,
+		GLfloat startPitch = 0.0f,
+		GLfloat startMoveSpeed = 500.0f,
+		GLfloat StartTurnSpeed = 0.3f);
 	void keyControl(bool* keys, GLfloat deltaTime);
 	void mouseControl(GLfloat xChange, GLfloat yChange);
 

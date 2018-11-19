@@ -1,5 +1,6 @@
 #include <memory>
 #include <functional>
+#include <sstream>
 
 // GLM
 #include <glm/glm.hpp>
@@ -21,8 +22,9 @@ bool Application::mouseFirstMoved = true;
 bool Application::keys[1024];
 
 
-Application::Application()
+Application::Application(const char *windowTitle)
 {
+	app_windowTitle = windowTitle; // set window title
 	app_shader = Shader();
 }
 
@@ -43,6 +45,37 @@ GLfloat Application::getYChange()
 	GLfloat theChange = yChange;
 	yChange = 0.0f;
 	return theChange;
+}
+
+void Application::showFPS()
+{
+	
+		static double previousSeconds = 0.0;
+		static int frameCount;
+		double elapsedSeconds;
+		double currentSeconds = glfwGetTime();
+
+		elapsedSeconds = currentSeconds - previousSeconds;
+
+		// limit FPS refresh rate to 4 times per second
+		if (elapsedSeconds > 0.25) {
+			previousSeconds = currentSeconds;
+			double FPS = (double)frameCount / elapsedSeconds;
+			double msPerFrame = 1000.0 / FPS;
+
+			std::ostringstream outs;
+			outs.precision(3);
+			outs << std::fixed
+				<< app_windowTitle << "  "
+				<< "FPS: " << FPS << "  "
+				<< "Frame time: " << msPerFrame << "ms" << std::endl;
+			glfwSetWindowTitle(app_window, outs.str().c_str());
+
+			frameCount = 0;
+		}
+		frameCount++;
+
+	
 }
 
 void Application::moveCamera(GLfloat deltaTime)
@@ -125,7 +158,7 @@ void Application::clear()
 void Application::draw(const Mesh & mesh)
 {
 	app_view = camera.calculateViewMatrix();
-	app_projection = glm::perspective(45.0f, (GLfloat)getBufferWidth() / getBufferHeight(), 0.1f, 100.0f);
+	app_projection = glm::perspective(45.0f, (GLfloat)getBufferWidth() / getBufferHeight(), 0.1f, 5000.0f);
 	mesh.getShader().UseShader();
 	// view and projection matrices
 
