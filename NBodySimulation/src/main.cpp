@@ -3,6 +3,9 @@
 #include <cmath>
 #include <vector>
 #include <random>
+#include <thread>
+#include <omp.h>
+#include <future>
 
 #include <GL\glew.h>
 #include <GLFW\glfw3.h>
@@ -27,16 +30,16 @@ static const char* vShader = "Shaders/physics.vert";
 static const char* fShader = "Shaders/physics.frag";
 
 
-constexpr int BODIES = 400;
+constexpr int BODIES = 2000;
 
 std::vector<Body*> bodyList;
 std::vector<Shader*> shaderList;
 std::vector<glm::vec3> gravs(BODIES);
 using namespace std;
 
-void getGravity(std::vector<Body*> bodyList)
+void getGravity(std::vector<Body*> bodyList, int start, int end)
 {
-	for (int i = 0; i < BODIES - 1; i++)
+	for (int i = start; i < end - 1; i++)
 	{
 		glm::vec3 result = glm::vec3(0.0f);
 
@@ -100,8 +103,12 @@ int main()
 		bodyList.push_back(a);
 	}
 
+	//paralellize the grav method
+	auto num_threads = thread::hardware_concurrency();
+	vector<thread> threads;
+	auto range = static_cast<int>(BODIES / num_threads);
 
-
+		
 	const float dt = 0.003f;
 	float accumulator = 0.0f;
 	GLfloat currentTime = (GLfloat)glfwGetTime();
@@ -120,10 +127,25 @@ int main()
 		accumulator += frameTime;
 
 		app.showFPS();
+
+		//create some threads to do work
+		for (size_t n = 0; n < num_threads; ++n)
+		{
+			threads.push_back(thread(getGravity, bodyList, n*range, (n + 1) * range));
+		}
 		
 		while (accumulator >= dt)
 		{
-			getGravity(bodyList);
+			
+		
+			//threads paralellization
+			for (auto &t : threads)
+			{
+				t.join();
+			}
+			threads.clear();
+			//sequential
+			//getGravity(bodyList, 0, BODIES);
 
 			for (int i=0;i<BODIES-1;i++)
 			{
