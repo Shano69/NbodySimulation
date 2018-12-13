@@ -86,15 +86,13 @@ int main()
 		bodyList.push_back(a);
 	}
 
-	const float dt = 0.003f;
+	const float dt = 0.03f;
 	float accumulator = 0.0f;
 	GLfloat currentTime = (GLfloat)glfwGetTime();
 
 
 
 
-	//load data into GPU
-	solver.loadBuffers(BODIES, bodyList, gravs, dt);
 
 
 	// Loop until window closed
@@ -105,7 +103,7 @@ int main()
 		GLfloat frameTime = newTime - currentTime;
 
 		//*******************************************************************************************************************
-		frameTime *= 0.1;
+		frameTime *= 1;
 		currentTime = newTime;
 		accumulator += frameTime;
 
@@ -113,25 +111,29 @@ int main()
 		
 		auto start = chrono::system_clock::now();
 
+
+		//load data into GPU
+		solver.loadBuffers(BODIES, bodyList, gravs, dt);
 		solver.getGravities(gravs, BODIES, dt);
 
 		auto end = chrono::system_clock::now();
 		duration<double, milli> diff = end - start;
 		output << diff.count() << ",";
 
-			
-
+		
+		while (accumulator >= dt)
+		{
 			for (int i = 0; i < BODIES; i++)
 			{
 				//move the body
 				// integration position
-				/*bodyList[i]->setAcc(gravs[i]);
-				bodyList[i]->setVel(bodyList[i]->getVel() + dt * bodyList[i]->getAcc());*/
-				bodyList[i]->setPos(gravs[i]);
+				bodyList[i]->setAcc(gravs[i]);
+				bodyList[i]->setVel(bodyList[i]->getVel() + dt * bodyList[i]->getAcc());
+				bodyList[i]->setPos(bodyList[i]->getPos() + dt * bodyList[i]->getVel());
 
 			}
-
 			accumulator -= dt;
+		}
 		
 		// Get + Handle user input events
 		glfwPollEvents();

@@ -12,3 +12,23 @@ NBodySimulation/NBodySimulation\.vcxproj\.filters
 NBodySimulation/NBodySimulation\.vcxproj\.user
 
 x64/
+
+*.csv
+
+*.vcxproj
+
+*.nvuser
+
+NBodySimulation/NbodyCUDA/NbodyCUDA/NbodyCUDA\.vcxproj\.user
+
+*.sln
+
+*.user
+
+*.filters
+
+*.psess
+
+*.vspx
+
+*.dll

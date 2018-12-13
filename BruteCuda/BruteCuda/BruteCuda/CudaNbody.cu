@@ -8,9 +8,9 @@ using namespace std;
 
 __global__ void getGrav(float4*cu_pos, float4 *cu_gravs, float4 *cu_vel, float dt)
 {
-	__shared__ float4 sharedPos[1024 * 2];
+	
 	//the pos of the current thread
-	float4 myPosition;
+	
 
 	int i;
 	
@@ -21,19 +21,15 @@ __global__ void getGrav(float4*cu_pos, float4 *cu_gravs, float4 *cu_vel, float d
 	int gtid;
 	gtid = ( blockIdx.x * blockDim.x ) + threadIdx.x;
 
-
-	myPosition = cu_pos[gtid];
-	sharedPos[gtid] = cu_pos[gtid];
-
 	for (i = 0; i < 1024 * 2; i ++)
 	{
 		
 			//body body interaction part
 			float3 delta;
 
-			delta.x = sharedPos[i].x - myPosition.x;
-			delta.y = sharedPos[i].y - myPosition.y;
-			delta.z = sharedPos[i].z - myPosition.z;
+			delta.x = cu_pos[i].x - cu_pos[gtid].x;
+			delta.y = cu_pos[i].y - cu_pos[gtid].y;
+			delta.z = cu_pos[i].z - cu_pos[gtid].z;
 
 			float distance = sqrt(delta.x * delta.x + delta.y * delta.y + delta.z * delta.z) ;
 
@@ -42,33 +38,17 @@ __global__ void getGrav(float4*cu_pos, float4 *cu_gravs, float4 *cu_vel, float d
 				//direction of the gravity force
 				float4 dir = { delta.x / distance, delta.y / distance, delta.z / distance, 0.0f };
 				//size of the gravity force F = G * m1*m2/d^2
-				result.x += ((float)6.67408* (sharedPos[i].w * myPosition.w) / (distance * distance)) * dir.x;
-				result.y += ((float)6.67408* (sharedPos[i].w * myPosition.w) / (distance * distance)) * dir.y;
-				result.z += ((float)6.67408* (sharedPos[i].w * myPosition.w) / (distance * distance)) * dir.z;
+				result.x += ((float)6.67408* (cu_pos[i].w * cu_pos[gtid].w) / (distance * distance)) * dir.x;
+				result.y += ((float)6.67408* (cu_pos[i].w * cu_pos[gtid].w) / (distance * distance)) * dir.y;
+				result.z += ((float)6.67408* (cu_pos[i].w * cu_pos[gtid].w) / (distance * distance)) * dir.z;
 				result.w = 0.0f;
 				//printf("distance -> %f", distance);
 				__syncthreads();
 			}
 
 	}
-	cu_gravs[gtid] = result;
 
-	float accumulator = 0.1f;
-
-	while (accumulator >= dt)
-	{
-
-		//gpu integration on movement
-		cu_vel[gtid].x = cu_vel[gtid].x + cu_gravs[gtid].x * dt;
-		cu_vel[gtid].y = cu_vel[gtid].y + cu_gravs[gtid].y * dt;
-		cu_vel[gtid].z = cu_vel[gtid].z + cu_gravs[gtid].z * dt;
-
-		cu_pos[gtid].x = cu_pos[gtid].x + cu_vel[gtid].x * dt;
-		cu_pos[gtid].y = cu_pos[gtid].y + cu_vel[gtid].y * dt;
-		cu_pos[gtid].z = cu_pos[gtid].z + cu_vel[gtid].z * dt;
-
-		accumulator -= dt;
-	}
+		cu_gravs[gtid] = result;
 }
 
 void Cuda::getGravities( std::vector<glm::vec3>& gravs, int BODIES, float dt)
@@ -86,7 +66,7 @@ void Cuda::getGravities( std::vector<glm::vec3>& gravs, int BODIES, float dt)
 		printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
 
 	//get the data back from the buffer 
-	auto temp = cudaMemcpy(&gravList[0], positionBuff, grav_size, cudaMemcpyDeviceToHost);
+	auto temp = cudaMemcpy(&gravList[0], gravityBuff, grav_size, cudaMemcpyDeviceToHost);
 
 	for (int i = 0; i < BODIES; i++)
 	{
@@ -94,7 +74,11 @@ void Cuda::getGravities( std::vector<glm::vec3>& gravs, int BODIES, float dt)
 		gravs[i].y = gravList[i].y;
 		gravs[i].z = gravList[i].z;
 	}
-	
+
+	cudaFree(positionBuff);
+	cudaFree(gravityBuff);
+	cudaFree(velocityBuf);
+	cudaFree(dtBuf);
 }
 
 
@@ -149,5 +133,6 @@ void  Cuda::loadBuffers(int BODIES, std::vector<Body*> bodyList, std::vector<glm
 		printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(s4));
 	
 	
+
 
 }

@@ -7,6 +7,9 @@
 #include <thread>
 #include <omp.h>
 #include <future>
+#include <chrono>
+#include <limits>
+
 
 #include <GL\glew.h>
 #include <GLFW\glfw3.h>
@@ -37,8 +40,9 @@ std::vector<Body*> bodyList;
 std::vector<Shader*> shaderList;
 std::vector<glm::vec3> gravs(BODIES);
 using namespace std;
+using namespace std::chrono;
 
-void getGravity(std::vector<Body*> bodyList, int start, int end)
+void getGravity(std::vector<Body*> bodyList, int start, int end, float dt)
 {
 	for (int i = start; i < end ; i++)
 	{
@@ -64,12 +68,18 @@ void getGravity(std::vector<Body*> bodyList, int start, int end)
 			}
 		}
 		gravs[i] = result;
+	
 	}
+
 	
 }
 
 int main() 
 {
+	//stat
+	//stats file
+	ofstream output;
+	output.open("Threads.csv");
 
 	//create app
 	Application app = Application::Application("NbodySim");
@@ -110,7 +120,7 @@ int main()
 	auto range = static_cast<int>(BODIES / num_threads);
 
 		
-	const float dt = 0.003f;
+	const float dt = 0.03f;
 	float accumulator = 0.0f;
 	GLfloat currentTime = (GLfloat)glfwGetTime();
 
@@ -132,33 +142,42 @@ int main()
 		//create some threads to do work
 		for (size_t n = 0; n < num_threads; n++)
 		{
-			threads.push_back(thread(getGravity, bodyList, n*range, (n + 1) * range));
+			threads.push_back(thread(getGravity, bodyList, n*range, (n + 1) * range, dt));
 		}
 		
-		while (accumulator >= dt)
-		{
-			
-		
-			//threads paralellization
-			for (auto &t : threads)
-			{
-				t.join();
-			}
-			threads.clear();
-			//sequential
-			//getGravity(bodyList, 0, BODIES);
+		auto start = chrono::system_clock::now();
 
-			for (int i=0;i<BODIES;i++)
+		for (auto &t : threads)
+		{
+			t.join();
+		}
+
+		auto end = chrono::system_clock::now();
+		duration<double, milli> diff = end - start;
+		output << diff.count() << ",";
+
+		
+			//threads paralellization 
+			// & body movement integration
+			
+
+			
+
+			for (int i = 0; i < BODIES; i++)
 			{
 				//move the body
 				// integration position
 				bodyList[i]->setAcc(gravs[i]);
 				bodyList[i]->setVel(bodyList[i]->getVel() + dt * bodyList[i]->getAcc());
 				bodyList[i]->setPos(bodyList[i]->getPos() + dt * (bodyList[i]->getVel()));
-				
+
 			}
+
+		
 			accumulator -= dt;
-		}
+		
+
+		threads.clear();
 		// Get + Handle user input events
 		glfwPollEvents();
 
@@ -177,6 +196,8 @@ int main()
 		}
 		app.display();
 	}
+
+	output.close();
 
 	return 0;
 }
