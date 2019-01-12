@@ -4,11 +4,11 @@
 
 using namespace std;
 
-
+constexpr int BOD = 512 * 4;
 
 __global__ void getGrav(float4*cu_pos, float4 *cu_gravs, float4 *cu_vel, float dt)
 {
-	__shared__ float4 sharedPos[1024 * 2];
+	__shared__ float4 sharedPos[512 * 4];
 	//the pos of the current thread
 	float4 myPosition;
 
@@ -25,7 +25,7 @@ __global__ void getGrav(float4*cu_pos, float4 *cu_gravs, float4 *cu_vel, float d
 	myPosition = cu_pos[gtid];
 	sharedPos[gtid] = cu_pos[gtid];
 
-	for (i = 0; i < 1024 * 2; i ++)
+	for (i = 0; i < 512 * 4; i ++)
 	{
 		
 			//body body interaction part
@@ -53,7 +53,7 @@ __global__ void getGrav(float4*cu_pos, float4 *cu_gravs, float4 *cu_vel, float d
 	}
 	cu_gravs[gtid] = result;
 
-	float accumulator = 0.1f;
+	float accumulator = 0.03f;
 
 	while (accumulator >= dt)
 	{
@@ -75,7 +75,7 @@ void Cuda::getGravities( std::vector<glm::vec3>& gravs, int BODIES, float dt)
 {
 	auto grav_size = sizeof(float4) * BODIES;
 
-	float4 gravList[1024 * 2];
+	float4 gravList[BOD];
 
 	//call the kernel
 	getGrav <<<BODIES / 512, 512 >>> (positionBuff, gravityBuff, velocityBuf, dt);
@@ -107,9 +107,9 @@ void  Cuda::loadBuffers(int BODIES, std::vector<Body*> bodyList, std::vector<glm
 	auto dt_size = sizeof(float);
 
 	//lists
-	float4 posLis[1024 * 2];
-	float4 gravList[1024 * 2];
-	float4 velList[1024 * 2];
+	float4 posLis[BOD];
+	float4 gravList[BOD];
+	float4 velList[BOD];
 
 
 	//Prepare data for GPU

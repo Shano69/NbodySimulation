@@ -35,7 +35,7 @@ static const char* fShader = "Shaders/physics.frag";
 
 Cuda solver;
 
-constexpr int BODIES = 1024*2 ;
+constexpr int BODIES = 512*4 ;
 
 std::vector<Body*> bodyList;
 std::vector<glm::vec3> posList(BODIES);
@@ -51,7 +51,7 @@ int main()
 {
 	//stats file
 	ofstream output;
-	output.open("CUDA.csv");
+	output.open("CUDA5124.csv");
 	//create app
 	Application app = Application::Application("NbodySim");
 	app.initRender();

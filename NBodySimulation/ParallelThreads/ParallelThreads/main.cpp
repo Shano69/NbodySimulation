@@ -34,7 +34,7 @@ static const char* vShader = "Shaders/physics.vert";
 static const char* fShader = "Shaders/physics.frag";
 
 
-constexpr int BODIES = 1024*2;
+constexpr int BODIES = 512*4;
 
 std::vector<Body*> bodyList;
 std::vector<Shader*> shaderList;
@@ -79,7 +79,7 @@ int main()
 	//stat
 	//stats file
 	ofstream output;
-	output.open("Threads.csv");
+	output.open("Threads5124.csv");
 
 	//create app
 	Application app = Application::Application("NbodySim");
@@ -124,6 +124,7 @@ int main()
 	float accumulator = 0.0f;
 	GLfloat currentTime = (GLfloat)glfwGetTime();
 
+	int i = 0;
 
 		// Loop until window closed
 	while (!app.getShouldClose())
@@ -154,8 +155,11 @@ int main()
 
 		auto end = chrono::system_clock::now();
 		duration<double, milli> diff = end - start;
-		output << diff.count() << ",";
-
+		if (i < 100)
+		{
+			output << diff.count() << ",";
+			i++;
+		}
 		
 			//threads paralellization 
 			// & body movement integration

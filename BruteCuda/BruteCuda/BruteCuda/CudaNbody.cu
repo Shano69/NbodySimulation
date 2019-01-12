@@ -4,9 +4,10 @@
 
 using namespace std;
 
+constexpr int BOD = 512 *4;
 
 
-__global__ void getGrav(float4*cu_pos, float4 *cu_gravs, float4 *cu_vel, float dt)
+__global__ void getGrav(float4*cu_pos, float4 *cu_gravs)
 {
 	
 	//the pos of the current thread
@@ -21,7 +22,7 @@ __global__ void getGrav(float4*cu_pos, float4 *cu_gravs, float4 *cu_vel, float d
 	int gtid;
 	gtid = ( blockIdx.x * blockDim.x ) + threadIdx.x;
 
-	for (i = 0; i < 1024 * 2; i ++)
+	for (i = 0; i < 512* 4; i ++)
 	{
 		
 			//body body interaction part
@@ -51,14 +52,14 @@ __global__ void getGrav(float4*cu_pos, float4 *cu_gravs, float4 *cu_vel, float d
 		cu_gravs[gtid] = result;
 }
 
-void Cuda::getGravities( std::vector<glm::vec3>& gravs, int BODIES, float dt)
+void Cuda::getGravities( std::vector<glm::vec3>& gravs, int BODIES)
 {
 	auto grav_size = sizeof(float4) * BODIES;
 
-	float4 gravList[1024 * 2];
+	float4 gravList[BOD];
 
 	//call the kernel
-	getGrav <<<BODIES / 512, 512 >>> (positionBuff, gravityBuff, velocityBuf, dt);
+	getGrav <<<BODIES / 512, 512 >>> (positionBuff, gravityBuff);
 
 	// Wait for kernel to complete check for errors
 	cudaError_t cudaerr = cudaDeviceSynchronize();
@@ -77,12 +78,10 @@ void Cuda::getGravities( std::vector<glm::vec3>& gravs, int BODIES, float dt)
 
 	cudaFree(positionBuff);
 	cudaFree(gravityBuff);
-	cudaFree(velocityBuf);
-	cudaFree(dtBuf);
 }
 
 
-void  Cuda::loadBuffers(int BODIES, std::vector<Body*> bodyList, std::vector<glm::vec3>& gravs, float dt)
+void  Cuda::loadBuffers(int BODIES, std::vector<Body*> bodyList, std::vector<glm::vec3>& gravs)
 {
 	//data size
 	auto posList_size = sizeof(float4) * BODIES;
@@ -91,9 +90,9 @@ void  Cuda::loadBuffers(int BODIES, std::vector<Body*> bodyList, std::vector<glm
 	auto dt_size = sizeof(float);
 
 	//lists
-	float4 posLis[1024 * 2];
-	float4 gravList[1024 * 2];
-	float4 velList[1024 * 2];
+	float4 posLis[BOD];
+	float4 gravList[BOD];
+	float4 velList[BOD];
 
 
 	//Prepare data for GPU
@@ -105,14 +104,12 @@ void  Cuda::loadBuffers(int BODIES, std::vector<Body*> bodyList, std::vector<glm
 	{
 		gravList[i] = { bodyList[i]->getAcc().x,bodyList[i]->getAcc().y,bodyList[i]->getAcc().z, 0.0f };
 		posLis[i] = { bodyList[i]->getPos().x,bodyList[i]->getPos().y,bodyList[i]->getPos().z, bodyList[i]->getMass() };
-		velList[i] = { bodyList[i]->getVel().x,bodyList[i]->getVel().y,bodyList[i]->getVel().z, 0.0f };
+	
 	}
 
 	//allocate memory
 	cudaMalloc((void**)&positionBuff, posList_size);
 	cudaMalloc((void**)&gravityBuff, grav_size);
-	cudaMalloc((void**)&velocityBuf, vel_size);
-	cudaMalloc((void**)&dtBuf, dt_size);
 
 	
 	//copy data to GPU
@@ -123,16 +120,5 @@ void  Cuda::loadBuffers(int BODIES, std::vector<Body*> bodyList, std::vector<glm
 	cudaError_t s2 = cudaMemcpy(gravityBuff, &gravList[0], grav_size, cudaMemcpyHostToDevice);
 	if (s2 != cudaSuccess)
 		printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(s2));
-
-	cudaError_t s3 = cudaMemcpy(velocityBuf, &velList[0], posList_size, cudaMemcpyHostToDevice);
-	if (s3 != cudaSuccess)
-		printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(s3));
-
-	cudaError_t s4 = cudaMemcpy(dtBuf, &dt, dt_size, cudaMemcpyHostToDevice);
-	if (s4 != cudaSuccess)
-		printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(s4));
-	
-	
-
 
 }

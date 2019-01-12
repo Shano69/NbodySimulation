@@ -10,9 +10,9 @@ class Cuda
 public:
 	Cuda() {};
 	~Cuda() {}; 
-	void getGravities(std::vector<glm::vec3>& gravs, int BODIES, float dt);
+	void getGravities(std::vector<glm::vec3>& gravs, int BODIES);
 
-	void loadBuffers(int BODIES, std::vector<Body*> bodyList, std::vector<glm::vec3>& gravs, float dt);
+	void loadBuffers(int BODIES, std::vector<Body*> bodyList, std::vector<glm::vec3>& gravs);
 
 private:
 	float4 *positionBuff;

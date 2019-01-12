@@ -31,7 +31,7 @@ static const char* vShader = "Shaders/physics.vert";
 static const char* fShader = "Shaders/physics.frag";
 
 
-constexpr int BODIES = 1024;
+constexpr int BODIES = 512;
 
 std::vector<Body*> bodyList;
 std::vector<Shader*> shaderList;
@@ -73,7 +73,7 @@ int main()
 {
 	//create file for statistics
 	ofstream output;
-	output.open("Nbody.csv");
+	output.open("Nbody512.csv");
 
 	//create app
 	Application app = Application::Application("NbodySim");
@@ -113,6 +113,7 @@ int main()
 	float accumulator = 0.0f;
 	GLfloat currentTime = (GLfloat)glfwGetTime();
 
+	int i = 0;
 
 		// Loop until window closed
 	while (!app.getShouldClose())
@@ -137,7 +138,12 @@ int main()
 			getGravity(bodyList, 0, BODIES);
 			auto end = chrono::system_clock::now();
 			duration<double, milli> diff = end - start;
-			output << diff.count() << ",";
+			if(i<100)
+			{
+				output << diff.count() << ",";
+				i++;
+			}
+			
 
 			for (int i=0;i<BODIES;i++)
 			{
